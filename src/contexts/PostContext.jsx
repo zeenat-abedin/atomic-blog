@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import { faker } from "@faker-js/faker";
 
 function createRandomPost() {
@@ -16,7 +16,6 @@ function PostProvider({ children }) {
     Array.from({ length: 30 }, () => createRandomPost())
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [isFakeDark, setIsFakeDark] = useState(false);
 
   // Derived state. These are the posts that will actually be displayed
   const searchedPosts =
@@ -28,14 +27,6 @@ function PostProvider({ children }) {
         )
       : posts;
 
-  // Whenever `isFakeDark` changes, we toggle the `fake-dark-mode` class on the HTML element (see in "Elements" dev tool).
-  useEffect(
-    function () {
-      document.documentElement.classList.toggle("fake-dark-mode");
-    },
-    [isFakeDark]
-  );
-
   function handleAddPost(post) {
     setPosts((posts) => [post, ...posts]);
   }
@@ -46,22 +37,24 @@ function PostProvider({ children }) {
 
   const value = useMemo(() => {
     return {
-      posts: { searchedPosts },
+      posts: searchedPosts,
       onAddPost: handleAddPost,
-      onClearPosts: { handleClearPosts },
+      onClearPosts: handleClearPosts,
       searchQuery,
       setSearchQuery,
     };
-  }, [searchQuery, searchedPosts]);
+  }, [searchedPosts, searchQuery]);
 
-  // 2) PROVIDE VALUE TO CHILD COMPONENTS
-  return <PostProvider.Context value={value}>{children}</PostProvider.Context>;
+  return (
+    // 2) PROVIDE VALUE TO CHILD COMPONENTS
+    <PostContext.Provider value={value}>{children}</PostContext.Provider>
+  );
 }
 
 function usePosts() {
   const context = useContext(PostContext);
   if (context === undefined)
-    throw new Error("usePosts must be used within the Provider");
+    throw new Error("PostContext was used outside of the PostProvider");
   return context;
 }
 
